@@ -5,17 +5,12 @@
 # Northwestern University
 #
 
-#!/bin/python3.12
-
 import requests
 from configparser import ConfigParser
 import xml.etree.ElementTree as xmlET
 import time
 
-def file_suffix_from_resp( response ):
-    conttype = response.headers.get( 'Content-Type', None )
-    if not conttype:
-        return None
+def mk_suffix( conttype ):
     labels = conttype.split( sep='/' )
     suffix = '.unknown'
     if len( labels ) < 2:
@@ -85,6 +80,11 @@ for retry in range( 1, MAX_RETRIES+1 ):
             response._content = xmlET.tostring( root, encoding='UTF-8' )
     finally:
         pass
+    '''
+    Since the `try` block otherwise constitutes the entire loop body,
+    the `sleep()` call can be placed after the `try` block instead of 
+    under `finally`.
+    '''
     time.sleep(retry)
 
 #
@@ -103,13 +103,14 @@ if status_code == 200:
 
     # restore file suffix
     if imagename.find( '.' ) < 0:
-        suffix = file_suffix_from_resp( response )
-        if suffix:
+        conttype = response.headers.get( 'Content-Type', None )
+        if conttype:
+            suffix = mk_suffix( conttype )
             imagename += suffix
 
     with open(imagename, 'wb') as file:
         file.write(response.content)
-    print("Success, image downloaded to '", imagename, "'")
+    print("Success, image downloaded to '" + imagename + "'")
 else:
     #
     # error:
