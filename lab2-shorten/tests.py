@@ -61,6 +61,14 @@ class URLShortenerTests(unittest.TestCase):
       count = shorten.get_stats(shorturl)
       self.assertEqual(count, 1)
 
+      # now lookup short url:
+      url = shorten.get_url(shorturl)
+      self.assertEqual(url, longurl)
+
+      # stats should now be 2:
+      count = shorten.get_stats(shorturl)
+      self.assertEqual(count, 2)
+
       # legal to shorten the same long to short url:
       success = shorten.put_shorturl(longurl, shorturl)
       self.assertEqual(success, True)

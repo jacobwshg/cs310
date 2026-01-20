@@ -104,6 +104,7 @@ def get_url(shorturl):
       longurl = ""
 
       try:
+        dbconn.begin()
         cursor.execute( select_query, [shorturl] )
         if cursor.rowcount == 1:
           row = cursor.fetchone()
@@ -152,6 +153,7 @@ def get_stats(shorturl):
       access_cnt = -1
 
       try:
+        dbconn.begin()
         cursor.execute( select_query, [shorturl] )
         if cursor.rowcount == 1:
           row = cursor.fetchone()
@@ -207,6 +209,7 @@ def put_shorturl(longurl, shorturl):
     with dbconn.cursor() as cursor:
 
       try:
+        dbconn.begin()
         cursor.execute( select_query, [shorturl] )
         if cursor.rowcount > 0:
           for row in cursor.fetchall():
@@ -254,6 +257,7 @@ def put_reset():
     with dbconn.cursor() as cursor:
 
       try:
+        dbconn.begin()
         cursor.execute( delete_query )
         dbconn.commit()
         return True
