@@ -87,21 +87,38 @@ def get_url(shorturl):
   long URL (string), or empty string if short URL not found
   """
 
-  try:
-    dbConn = get_dbConn()
-    #
-    # TODO:
-    #
-    return ""
+  select_query = """
+    Select longurl 
+    From shorten 
+    Where shorturl = %s;
+  """
+  update_query = """
+    Update shorten 
+    Set access_cnt = access_cnt + 1 
+    Where shorturl = %s;
+  """
+ 
+  with get_dbConn() as dbconn:
+    with dbconn.cursor() as cursor:
 
-  except Exception as err:
-    print("**ERROR in shorten.get_url():")
-    print(str(err))
-    return ""
+      longurl = ""
 
-  finally:
-    if dbConn is not None: dbConn.close()
+      try:
+        cursor.execute( select_query, [shorturl] )
+        if cursor.rowcount == 1:
+          row = cursor.fetchone()
+          longurl = row[0]
+          cursor.execute( update_query, [shorturl] )
+        dbconn.commit()
+        return longurl
 
+      except Exception as err:
+        dbconn.rollback()
+        print("**ERROR in shorten.get_url():")
+        print(str(err))
+        return ""
+
+  return ""
 
 ##################################################################
 #
@@ -123,21 +140,30 @@ def get_stats(shorturl):
   the count associated with the short url, -1 if short URL not found
   """
 
-  try:
-    dbConn = get_dbConn()
-    #
-    # TODO:
-    #
-    return -1
+  select_query = """
+    Select access_cnt
+    From shorten
+    Where shorturl = %s;
+  """
 
-  except Exception as err:
-    print("**ERROR in shorten.get_stats():")
-    print(str(err))
-    return -1
+  with get_dbConn() as dbconn:
+    with dbconn.cursor() as cursor:
 
-  finally:
-    if dbConn is not None: dbConn.close()
+      access_cnt = -1
 
+      try:
+        cursor.execute( select_query, [shorturl] )
+        if cursor.rowcount == 1:
+          row = cursor.fetchone()
+          access_cnt = row[0]
+        return access_cnt
+
+      except Exception as err:
+        print("**ERROR in shorten.get_stats():")
+        print(str(err))
+        return -1
+
+  return -1
 
 ##################################################################
 #
@@ -165,23 +191,40 @@ def put_shorturl(longurl, shorturl):
   True if successful, False if not
   """
 
-  success = False
+  # test if SHORTURL is in table
+  select_query = """
+    Select longurl
+    From shorten
+    Where shorturl = %s;
+  """
 
-  try:
-    dbConn = get_dbConn()
-    #
-    # TODO:
-    #
-    return False
+  insert_query = """
+    Insert Into shorten(shorturl, longurl, access_cnt)
+    Values(%s, %s, 0);
+  """
 
-  except Exception as err:
-    print("**ERROR in shorten.put_shorturl():")
-    print(str(err))
-    return False
+  with get_dbConn() as dbconn:
+    with dbconn.cursor() as cursor:
 
-  finally:
-    if dbConn is not None: dbConn.close()
+      try:
+        cursor.execute( select_query, [shorturl] )
+        if cursor.rowcount > 0:
+          for row in cursor.fetchall():
+            if row[0] == longurl:
+              return True
+          return False
+        else:
+          cursor.execute( insert_query, [shorturl, longurl] )
+        dbconn.commit()
+        return True
 
+      except Exception as err:
+        dbconn.rollback()
+        print("**ERROR in shorten.put_shorturl():")
+        print(str(err))
+        return False
+
+  return False
 
 ###############################################################
 #
@@ -202,17 +245,22 @@ def put_reset():
   True if successful, False if not
   """
 
-  try:
-    dbConn = get_dbConn()
-    #
-    # TODO:
-    #
-    return False
-  
-  except Exception as err:
-    print("**ERROR in shorten.put_reset():")
-    print(str(err))
-    return False
+  delete_query = """
+    Delete 
+    From shorten;
+  """
 
-  finally:
-    if dbConn is not None: dbConn.close()
+  with get_dbConn() as dbconn:
+    with dbconn.cursor() as cursor:
+
+      try:
+        cursor.execute( delete_query )
+        dbconn.commit()
+        return True
+      except Exception as err:
+        print("**ERROR in shorten.put_reset():")
+        print(str(err))
+        return False
+
+  return False
+
