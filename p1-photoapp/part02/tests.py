@@ -54,11 +54,19 @@ class PhotoappTests(unittest.TestCase):
 
     print("test passed!")
 
+  def test_get_images( self ):
+    print()
+    print("** test_get_images **")
+
+    uid = 80001
+    for img in photoapp.get_images( uid ):
+      print( img )
+
   def test_post_image(self):
     print()
     print("** test_post_image **")
 
-    uid = 80003
+    uid = 80001
     locname = "01degu.jpg"
 
     assetid = photoapp.post_image( uid, locname )

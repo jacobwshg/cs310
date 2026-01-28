@@ -425,6 +425,7 @@ def get_users():
   except Exception as err:
     lg.error( "get_users():" )
     lg.error( str(err) )
+    raise
 
   return res
 
@@ -462,23 +463,27 @@ def get_images(userid = None):
 
   if userid is not None:
     query += """
-      Where userid = %s
+      Where userid = %s 
     """
 
   query += """
     Order By assetid Asc;
   """
 
-  res = []
+  res = None
 
   try:
     with get_dbConn() as dbconn:
       with dbconn.cursor() as cursor:
-        cursor.execute( query )
+        if userid:
+          cursor.execute( query, [ userid ] )
+        else:
+          cursor.execute( query )
         res = list( cursor.fetchall() )
   except Exception as err:
     lg.error( "get_images():" )
     lg.error( str(err) )
+    raise
 
   return res
 
@@ -521,7 +526,7 @@ def post_image(userid, local_filename):
     try:
       with get_dbConn() as dbconn:
         with dbconn.cursor() as cursor:
-          cursor.execute( query, [userid] )
+          cursor.execute( query, [ userid ] )
           match cursor.rowcount:
             case 1:
               username = cursor.fetchone()[0]
@@ -532,6 +537,7 @@ def post_image(userid, local_filename):
     except Exception as err:
       lg.error( "post_image.lookup_user():" )
       lg.error( str( err ) )
+      raise
 
     return username
 
@@ -553,6 +559,7 @@ def post_image(userid, local_filename):
     except Exception as err:
       lg.error( "post_image.upload_to_bucket():" )
       lg.error( str( err ) )
+      raise
     finally:
       try:
         bkt.close()
@@ -580,9 +587,11 @@ def post_image(userid, local_filename):
           dbconn.rollback()
           lg.error( "post_image.update_db():" )
           lg.error( str( err ) )
+          raise
     except Exception as err:
       lg.error( "post_image.update_db():" )
       lg.error( str( err ) )
+      raise
     return success
 
   @RETRY_3
@@ -602,6 +611,7 @@ def post_image(userid, local_filename):
     except Exception as err:
       lg.error( "post_image.retrieve_assetid():" )
       lg.error( str( err ) )
+      raise
 
     return assetid
 
@@ -628,6 +638,7 @@ def post_image(userid, local_filename):
     except Exception as err:
       lg.error( "post_image.get_labels():" )
       lg.error( str( err ) )
+      raise
 
     finally:
       try:
@@ -641,12 +652,7 @@ def post_image(userid, local_filename):
 
     return labels
 
-  #@RETRY_3
-  @retry(
-    stop=stop_after_attempt( 3 ),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    reraise=True
-  )
+  @RETRY_3
   def update_labels( assetid, bucketkey ):
     success = False
 
@@ -673,10 +679,12 @@ def post_image(userid, local_filename):
           dbconn.rollback()
           lg.error( "delete_images.update_labels():" )
           lg.error( str( err ) )
+          raise
 
     except Exception as err:
       lg.error( "delete_images.update_labels():" )
       lg.error( str( err ) )
+      raise
 
     return success
 
@@ -697,7 +705,8 @@ def post_image(userid, local_filename):
   if not assetid:
     return None
 
-  update_labels( assetid, bucketkey )
+  if not update_labels( assetid, bucketkey ):
+    return None
 
   return assetid
 
@@ -727,12 +736,7 @@ def get_image( assetid, local_filename=None ):
   exception upon error
   """
 
-  #@RETRY_3
-  @retry(
-    stop=stop_after_attempt( 3 ),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    reraise=True
-  )
+  @RETRY_3
   def get_db_record():
     query = """
       Select localname, bucketkey
@@ -756,6 +760,7 @@ def get_image( assetid, local_filename=None ):
     except Exception as err:
       lg.error( "get_image.get_db_record():" )
       lg.error( str( err ) )
+      raise
 
     return db_localname, bucketkey
 
@@ -768,6 +773,7 @@ def get_image( assetid, local_filename=None ):
     except Exception as err:
       lg.error( "get_image.get_file():" )
       lg.error( str( err ) )
+      raise
     finally:
       try:
         bucket.close()
@@ -814,12 +820,7 @@ def delete_images():
   True if successful, raises an exception on error
   """
 
-  #@RETRY_3
-  @retry(
-    stop=stop_after_attempt( 3 ),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    reraise=True
-  ) 
+  @RETRY_3
   def getbucketkeys():
     query = """
       Select bucketkey
@@ -836,18 +837,14 @@ def delete_images():
     except Exception as err:
       lg.error( "delete_images.getbucketkeys():" )
       lg.error( str( err ) )
+      raise
 
     #if len( keys ) == 0:
     #  return None
 
     return keys
 
-  #@RETRY_3
-  @retry(
-    stop=stop_after_attempt( 3 ),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    reraise=True
-  ) 
+  @RETRY_3
   def clear_db():
     query = """
       SET foreign_key_checks = 0;
@@ -872,11 +869,12 @@ def delete_images():
           dbconn.rollback()
           lg.error( "delete_images.clear_db():" )
           lg.error( str( err ) )
+          raise
 
     except Exception as err:
       lg.error( "delete_images.clear_db():" )
       lg.error( str( err ) )
-
+      raise
     return success
 
   def clear_bucket( bucketkeys ):
@@ -888,6 +886,7 @@ def delete_images():
     except Exception as err:
       lg.error( "delete_images.clear_bucket():" )
       lg.error( str( err ) )
+      raise
     finally:
       try:
         bucket.close()
@@ -912,12 +911,7 @@ def delete_images():
 #
 # get_image_labels
 #
-#@RETRY_3
-@retry(
-  stop=stop_after_attempt( 3 ),
-  wait=wait_exponential(multiplier=1, min=2, max=30),
-  reraise=True
-) 
+@RETRY_3
 def get_image_labels( assetid ):
   """
   When an image is uploaded to S3, the Rekognition AI slop is
@@ -958,10 +952,11 @@ def get_image_labels( assetid ):
         cursor.execute( query, [ assetid ] )
         if cursor.rowcount < 1:
           raise ValueError( "no such assetid" )
-        labels = cursor.fetchall()
+        labels = list( cursor.fetchall() )
   except Exception as err:
     lg.error( "get_image_labels():" )
     lg.error( str( err ) )
+    raise
  
   return labels
 
@@ -969,12 +964,7 @@ def get_image_labels( assetid ):
 #
 # get_images_with_label
 #
-#@RETRY_3
-@retry(
-  stop=stop_after_attempt( 3 ),
-  wait=wait_exponential(multiplier=1, min=2, max=30),
-  reraise=True
-) 
+@RETRY_3
 def get_images_with_label( label ):
   """
   When an image is uploaded to S3, the Rekognition AI slop is
@@ -1018,10 +1008,11 @@ def get_images_with_label( label ):
     with get_dbConn() as dbconn:
       with dbconn.cursor() as cursor:
         cursor.execute( query, ( pattern, ) )
-        res = cursor.fetchall()
+        res = list( cursor.fetchall() )
   except Exception as err:
     lg.error( "get_images_with_label():" )
     lg.error( str( err ) )
+    raise
 
   return res
 
