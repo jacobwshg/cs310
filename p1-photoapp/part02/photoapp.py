@@ -606,8 +606,13 @@ def post_image(userid, local_filename):
       with get_dbConn() as dbconn:
         with dbconn.cursor() as cursor:
           cursor.execute( query, [ bucketkey ] )
-          if cursor.rowcount == 1:
-            assetid = cursor.fetchone()[0]
+          match cursor.rowcount:
+            case 1:
+              assetid = cursor.fetchone()[0]
+            case 0:
+              raise ValueError( "bucket key not found" )
+            case _:
+              raise ValueError( "duplicate bucket key" )
     except Exception as err:
       lg.error( "post_image.retrieve_assetid():" )
       lg.error( str( err ) )
