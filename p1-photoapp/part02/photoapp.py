@@ -502,7 +502,6 @@ def post_image( userid, local_filename ):
       )
       bkt.upload_file( local_filename, _bktkey )
       bucketkey = _bktkey
-      #i = 2//0 
     except Exception as err:
       lg.error( "post_image.upload_to_bucket():" )
       lg.error( str( err ) )
@@ -523,16 +522,16 @@ def post_image( userid, local_filename ):
     """
     try:
       with get_dbConn() as dbconn:
-        with dbconn.cursor() as cursor:
+        try:
           dbconn.begin()
-          try:
+          with dbconn.cursor() as cursor:
             cursor.execute( query, [ userid, local_filename, bucketkey ] )
-            dbconn.commit()
-            success = True
-          except Exception as err:
-            dbconn.rollback()
-            lg.error( "post_image.update_db():" )
-            lg.error( str( err ) )
+          dbconn.commit()
+          success = True
+        except Exception as err:
+          dbconn.rollback()
+          lg.error( "post_image.update_db():" )
+          lg.error( str( err ) )
     except Exception as err:
       lg.error( "post_image.update_db():" )
       lg.error( str( err ) )
@@ -558,6 +557,81 @@ def post_image( userid, local_filename ):
 
     return assetid
 
+  def generate_labels( bucketkey ):
+    labels = None
+    try:
+      bkt = get_bucket()
+      rkg = get_rekognition()
+      response = rkg.detect_labels(
+        Image=\
+        {
+          'S3Object':\
+          {
+            'Bucket': bkt.name,
+            'Name': bucketkey,
+          },
+        },
+        MaxLabels=100,
+        MinConfidence=80,
+      )
+      labels = response['Labels']
+      #labels = [ (row['Name'], row['Confidence']) for row in labels ]
+
+    except Exception as err:
+      lg.error( "post_image.get_labels():" )
+      lg.error( str( err ) )
+
+    finally:
+      try:
+        bkt.close()
+      except:
+        pass
+      try:
+        rkg.close()
+      except:
+        pass
+
+    return labels
+
+  #@RETRY_3
+  @retry(
+    stop=stop_after_attempt( 3 ),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    reraise=True
+  )
+  def update_labels( assetid, bucketkey ):
+    success = False
+
+    query = """
+      Insert Into labels( assetid, label, confidence )
+      Values( %s, %s, %s );
+    """
+
+    try:
+      labels = generate_labels( bucketkey )
+      with get_dbConn() as dbconn:
+        try:
+          dbconn.begin()
+          with dbconn.cursor() as cursor:
+            for row in labels:
+              cursor.execute(
+                query, 
+                [ assetid, row.get('Name'), int( row.get('Confidence') ) ]
+              )
+          dbconn.commit()
+          success = True
+
+        except Exception as err:
+          dbconn.rollback()
+          lg.error( "delete_images.update_labels():" )
+          lg.error( str( err ) )
+
+    except Exception as err:
+      lg.error( "delete_images.update_labels():" )
+      lg.error( str( err ) )
+
+    return success
+
   local_filename = local_filename.strip( './\\' ) 
 
   username = lookup_user()
@@ -574,6 +648,8 @@ def post_image( userid, local_filename ):
   assetid = retrieve_assetid( bucketkey )
   if not assetid:
     return None
+
+  update_labels( assetid, bucketkey )
 
   return assetid
 
@@ -713,6 +789,9 @@ def delete_images():
       lg.error( "delete_images.getbucketkeys():" )
       lg.error( str( err ) )
 
+    #if len( keys ) == 0:
+    #  return None
+
     return keys
 
   #@RETRY_3
@@ -724,7 +803,10 @@ def delete_images():
   def clear_db():
     query = """
       SET foreign_key_checks = 0;
+
       TRUNCATE TABLE assets;
+      TRUNCATE TABLE labels;
+
       SET foreign_key_checks = 1;
       ALTER TABLE assets AUTO_INCREMENT = 1001;
     """
@@ -732,16 +814,16 @@ def delete_images():
 
     try:
       with get_dbConn() as dbconn:
-        with dbconn.cursor() as cursor:
+        try:
           dbconn.begin()
-          try:
+          with dbconn.cursor() as cursor:
             cursor.execute( query )
-            dbconn.commit()
-            success = True
-          except Exception as err:
-            dbconn.rollback()
-            lg.error( "delete_images.clear_db():" )
-            lg.error( str( err ) )
+          dbconn.commit()
+          success = True
+        except Exception as err:
+          dbconn.rollback()
+          lg.error( "delete_images.clear_db():" )
+          lg.error( str( err ) )
 
     except Exception as err:
       lg.error( "delete_images.clear_db():" )

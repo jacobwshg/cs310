@@ -59,7 +59,7 @@ class PhotoappTests(unittest.TestCase):
     print("** test_post_image **")
 
     uid = 80003
-    locname = "player.jpg"
+    locname = "01degu.jpg"
 
     assetid = photoapp.post_image( uid, locname )
     print( f"userid: {uid}" )
@@ -70,7 +70,7 @@ class PhotoappTests(unittest.TestCase):
     print()
     print("** test_get_image **")
 
-    aid = 1026
+    aid = 1001
     _locname = "download.jpg"
 
     localname = photoapp.get_image( aid, _locname )
