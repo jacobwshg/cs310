@@ -22,6 +22,12 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 #
 PHOTOAPP_CONFIG_FILE = 'set via call to initialize()'
 
+# retry config
+RETRY3 = retry(
+  stop=stop_after_attempt( 3 ),
+  wait=wait_exponential(multiplier=1, min=2, max=30),
+  reraise=True
+)
 
 ###################################################################
 #
@@ -317,11 +323,14 @@ def get_ping():
       except:
         pass
 
+  '''
   @retry(
     stop=stop_after_attempt( 3 ),
     wait=wait_exponential(multiplier=1, min=2, max=30),
     reraise=True
   )
+  '''
+  @RETRY3
   def get_N():
     try:
       #
@@ -374,3 +383,197 @@ def get_ping():
     N = str(err)
 
   return (M, N)
+
+import logging as lg
+
+@RETRY3
+def get_users():
+  """
+  Return a list of all users in the database.
+  Each element in the list is a tuple containing
+  (userid, username, givennamem, familyname).
+  The tuples are ordered by userid, ascending. 
+  """
+  query = """
+    Select userid, username, givenname, familyname
+    From users
+    Order by userid Asc;
+  """
+
+  res = []
+
+  try:
+    with get_dbConn() as dbconn:
+      with dbconn.cursor() as cursor:
+        cursor.execute( query )
+        res = list( cursor.fetchall() )
+  except Exception as err:
+    lg.error( "get_users():" )
+    lg.error( str(err) )
+
+  return res
+
+@RETRY3
+def get_images( userid=None ):
+  """
+  Returns a list of all the images in the database.  
+  Each element of the list is a tuple containing 
+  (assetid, userid, localname, bucketkey).
+  The list is ordered by assetid, ascending.
+  If a userid is given, then just the images with that userid are returned.
+  """
+
+  query = """
+    Select assetid, userid, localname, bucketkey
+    From assets
+  """
+
+  if userid is not None:
+    query += """
+      Where userid = %s
+    """
+
+  query += """
+    Order By assetid Asc;
+  """
+
+  res = []
+
+  try:
+    with get_dbConn() as dbconn:
+      with dbconn.cursor() as cursor:
+        cursor.execute( query )
+        res = list( cursor.fetchall() )
+  except Exception as err:
+    lg.error( "get_images():" )
+    lg.error( str(err) )
+
+  return res
+
+def post_image( userid, local_filename ):
+  """
+  Uploads an image to S3 with a unique name, allowing the same local file
+  to be uploaded multiple times if desired.
+  A record of this image is inserted into the database, and upon success
+  a unique assetid is returned to identify this image.
+
+  An invalid userid is considered a ValueError, "no such userid".
+  """
+
+  import uuid
+
+  @RETRY3
+  def lookup_user():
+    username = None
+    query = """
+       Select username
+       From users
+       Where userid = %s;
+    """
+    try:
+      with get_dbConn() as dbconn:
+        with dbconn.cursor() as cursor:
+          cursor.execute( query, [userid] )
+          match cursor.rowcount:
+            case 1:
+              username = cursor.fetchone()[0]
+            case 0:
+              raise ValueError('no such userid')
+            case _:
+              raise ValueError('duplicate userid')
+    except Exception as err:
+      lg.error( "post_image.lookup_user():" )
+      lg.error( str( err ) )
+
+    return username
+
+  def upload_to_bucket( username ):
+    bucketkey = None
+    try:
+      bkt = get_bucket() 
+      _bktkey = ''.join(
+        [
+          username, 
+          '/',
+          str( uuid.uuid4() ),
+          '-',
+          local_filename
+        ]
+      )
+      bkt.upload_file( local_filename, _bktkey )
+      bucketkey = _bktkey
+      #i = 2//0 
+    except Exception as err:
+      lg.error( "post_image.upload_to_bucket():" )
+      lg.error( str( err ) )
+    finally:
+      try:
+        bkt.close()
+      except:
+        pass
+
+    return bucketkey
+
+  @RETRY3
+  def update_db( bucketkey ):
+    success = False
+    query = """
+      Insert Into assets( userid, localname, bucketkey )
+      Values( %s, %s, %s );
+    """
+    try:
+      with get_dbConn() as dbconn:
+        with dbconn.cursor() as cursor:
+          dbconn.begin()
+          try:
+            cursor.execute( query, [ userid, local_filename, bucketkey ] )
+            dbconn.commit()
+            success = True
+          except Exception as err:
+            dbconn.rollback()
+            lg.error( "post_image.update_db():" )
+            lg.error( str( err ) )
+    except Exception as err:
+      lg.error( "post_image.update_db():" )
+      lg.error( str( err ) )
+    return success
+
+  @RETRY3
+  def retrieve_assetid( bucketkey ):
+    assetid = None
+    query = """
+      Select assetid
+      From assets
+      Where bucketkey = %s;   
+    """
+    try:
+      with get_dbConn() as dbconn:
+        with dbconn.cursor() as cursor:
+          cursor.execute( query, [ bucketkey ] )
+          if cursor.rowcount == 1:
+            assetid = cursor.fetchone()[0]
+    except Exception as err:
+      lg.error( "post_image.retrieve_assetid():" )
+      lg.error( str( err ) )
+
+    return assetid
+
+  local_filename = local_filename.strip( './\\' ) 
+
+  username = lookup_user()
+  if not username:
+    return None
+
+  bucketkey = upload_to_bucket( username )
+  if not bucketkey:
+    return None
+
+  if not update_db( bucketkey ):
+    return None
+
+  assetid = retrieve_assetid( bucketkey )
+  if not assetid:
+    return None
+
+  return assetid
+

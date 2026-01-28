@@ -54,6 +54,17 @@ class PhotoappTests(unittest.TestCase):
 
     print("test passed!")
 
+  def test_post_image(self):
+    print()
+    print("** test_post_image **")
+
+    uid = 80001
+    fpath = "03rollcloud.jpg"
+
+    assetid = photoapp.post_image( uid, fpath )
+    print( f"userid: {uid}" )
+    print( f"file: {fpath}" )
+    print( f"assetid: {assetid}" )
 
 ############################################################
 #
