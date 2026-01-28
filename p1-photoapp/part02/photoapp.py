@@ -633,7 +633,6 @@ def post_image(userid, local_filename):
         MinConfidence=80,
       )
       labels = response['Labels']
-      #labels = [ (row['Name'], row['Confidence']) for row in labels ]
 
     except Exception as err:
       lg.error( "post_image.get_labels():" )
@@ -937,9 +936,15 @@ def get_image_labels( assetid ):
   a ValueError, "no such assetid".
   """
 
-  labels = None
+  labels = []
 
-  query = """
+  aid_query = """
+    Select assetid 
+    From assets
+    Where assetid = %s;
+  """
+
+  labels_query = """
     Select label, confidence
     From labels
     Where assetid = %s
@@ -949,10 +954,14 @@ def get_image_labels( assetid ):
   try:
     with get_dbConn() as dbconn:
       with dbconn.cursor() as cursor:
-        cursor.execute( query, [ assetid ] )
+
+        cursor.execute( aid_query, [ assetid ] )
         if cursor.rowcount < 1:
           raise ValueError( "no such assetid" )
+
+        cursor.execute( labels_query, [ assetid ] )
         labels = list( cursor.fetchall() )
+
   except Exception as err:
     lg.error( "get_image_labels():" )
     lg.error( str( err ) )
@@ -1007,7 +1016,7 @@ def get_images_with_label( label ):
   try:
     with get_dbConn() as dbconn:
       with dbconn.cursor() as cursor:
-        cursor.execute( query, ( pattern, ) )
+        cursor.execute( query, [ pattern ] )
         res = list( cursor.fetchall() )
   except Exception as err:
     lg.error( "get_images_with_label():" )
