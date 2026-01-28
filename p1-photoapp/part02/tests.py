@@ -58,13 +58,34 @@ class PhotoappTests(unittest.TestCase):
     print()
     print("** test_post_image **")
 
-    uid = 80001
-    fpath = "03rollcloud.jpg"
+    uid = 80003
+    locname = "player.jpg"
 
-    assetid = photoapp.post_image( uid, fpath )
+    assetid = photoapp.post_image( uid, locname )
     print( f"userid: {uid}" )
-    print( f"file: {fpath}" )
+    print( f"localname: { locname }" )
     print( f"assetid: {assetid}" )
+
+  def test_get_image(self):
+    print()
+    print("** test_get_image **")
+
+    aid = 1026
+    _locname = "download.jpg"
+
+    localname = photoapp.get_image( aid, _locname )
+    #localname = photoapp.get_image( aid )
+    print( f"assetid: {aid}" )
+    print( f"request localname: {_locname}" )
+    print( f"result localname: {localname}" )
+
+  def test_delete_images( self ):
+    print()
+    print("** test_delete_images **")
+
+    success = photoapp.delete_images()
+    print( f"result: { success }" )
+
 
 ############################################################
 #
@@ -72,3 +93,4 @@ class PhotoappTests(unittest.TestCase):
 #
 if __name__ == '__main__':
   unittest.main()
+

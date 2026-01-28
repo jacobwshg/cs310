@@ -23,7 +23,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 PHOTOAPP_CONFIG_FILE = 'set via call to initialize()'
 
 # retry config
-RETRY3 = retry(
+RETRY_3 = retry(
   stop=stop_after_attempt( 3 ),
   wait=wait_exponential(multiplier=1, min=2, max=30),
   reraise=True
@@ -330,7 +330,7 @@ def get_ping():
     reraise=True
   )
   '''
-  @RETRY3
+  @RETRY_3
   def get_N():
     try:
       #
@@ -386,7 +386,7 @@ def get_ping():
 
 import logging as lg
 
-@RETRY3
+@RETRY_3
 def get_users():
   """
   Return a list of all users in the database.
@@ -413,7 +413,7 @@ def get_users():
 
   return res
 
-@RETRY3
+@RETRY_3
 def get_images( userid=None ):
   """
   Returns a list of all the images in the database.  
@@ -462,7 +462,7 @@ def post_image( userid, local_filename ):
 
   import uuid
 
-  @RETRY3
+  @RETRY_3
   def lookup_user():
     username = None
     query = """
@@ -478,9 +478,9 @@ def post_image( userid, local_filename ):
             case 1:
               username = cursor.fetchone()[0]
             case 0:
-              raise ValueError('no such userid')
+              raise ValueError( "no such userid" )
             case _:
-              raise ValueError('duplicate userid')
+              raise ValueError( "unexpected duplicate userid" )
     except Exception as err:
       lg.error( "post_image.lookup_user():" )
       lg.error( str( err ) )
@@ -514,7 +514,7 @@ def post_image( userid, local_filename ):
 
     return bucketkey
 
-  @RETRY3
+  @RETRY_3
   def update_db( bucketkey ):
     success = False
     query = """
@@ -538,7 +538,7 @@ def post_image( userid, local_filename ):
       lg.error( str( err ) )
     return success
 
-  @RETRY3
+  @RETRY_3
   def retrieve_assetid( bucketkey ):
     assetid = None
     query = """
@@ -576,4 +576,205 @@ def post_image( userid, local_filename ):
     return None
 
   return assetid
+
+def get_image( assetid, local_filename=None ):
+  """
+  Downloads the image from S3 denoted by the provided asset. 
+
+  If a local_filename is provided, the newly-downloaded file is saved with 
+  this filename (overwriting any existing file with this name).
+
+  If a local_filename is not provided, the newly-downloaded file is saved 
+  using the local filename that was saved in the database
+  when the file was uploaded. 
+
+  If successful, the filename for the newly-downloaded file is returned; 
+  if an error occurs then an exception is raised. An invalid assetid is considered 
+  a ValueError, "no such assetid".
+
+  Parameters
+  ----------
+  assetid of image to download
+  local filename (optional) for newly-downloaded image
+
+  Returns
+  -------
+  local filename for the newly-downloaded file, or raises an
+  exception upon error
+  """
+
+  #@RETRY_3
+  @retry(
+    stop=stop_after_attempt( 3 ),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    reraise=True
+  )
+  def get_db_record():
+    query = """
+      Select localname, bucketkey
+      From assets
+      Where assetid = %s;
+    """
+
+    db_localname, bucketkey = None, None
+
+    try:
+      with get_dbConn() as dbconn:
+        with dbconn.cursor() as cursor:
+          cursor.execute( query, [ assetid ] )
+      match cursor.rowcount:
+        case 1:
+          db_localname, bucketkey = cursor.fetchone()
+        case 0:
+          raise ValueError( "no such assetid" )
+        case _:
+          raise ValueError( "unexpected duplicate assetid" )
+    except Exception as err:
+      lg.error( "get_image.get_db_record():" )
+      lg.error( str( err ) )
+
+    return db_localname, bucketkey
+
+  def get_file( bucketkey, localname ):
+    success = False
+    try:
+      bkt = get_bucket()
+      bkt.download_file( bucketkey, localname )
+      success = True
+    except Exception as err:
+      lg.error( "get_image.get_file():" )
+      lg.error( str( err ) )
+    finally:
+      try:
+        bucket.close()
+      except:
+        pass
+
+    return success
+
+  db_localname, bucketkey = get_db_record()
+  if not db_localname:
+    return None
+
+  localname = local_filename if local_filename else db_localname
+
+  if not get_file( bucketkey, localname ):
+    return None
+
+  return localname
+
+
+###################################################################
+#
+# delete_images
+#
+def delete_images():
+  """
+  Delete all images and associated labels from the database and S3.
+
+  Returns True if successful, raises an exception on error.
+
+  The images are not deleted from S3 unless the database is successfully 
+  cleared; if an error occurs either 
+  (a) there are no changes or 
+  (b) the database is cleared but there may be one or more images 
+  remaining in S3 (which has no negative effect since they have unique 
+  names).
+
+  Parameters
+  ----------
+  N/A
+
+  Returns
+  -------
+  True if successful, raises an exception on error
+  """
+
+  #@RETRY_3
+  @retry(
+    stop=stop_after_attempt( 3 ),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    reraise=True
+  ) 
+  def getbucketkeys():
+    query = """
+      Select bucketkey
+      From assets;
+    """
+    keys = None
+ 
+    try:
+      with get_dbConn() as dbconn:
+        with dbconn.cursor() as cursor:
+          cursor.execute( query )
+          rows = cursor.fetchall()
+          keys = [ { 'Key': row[0] } for row in rows ]
+    except Exception as err:
+      lg.error( "delete_images.getbucketkeys():" )
+      lg.error( str( err ) )
+
+    return keys
+
+  #@RETRY_3
+  @retry(
+    stop=stop_after_attempt( 3 ),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    reraise=True
+  ) 
+  def clear_db():
+    query = """
+      SET foreign_key_checks = 0;
+      TRUNCATE TABLE assets;
+      SET foreign_key_checks = 1;
+      ALTER TABLE assets AUTO_INCREMENT = 1001;
+    """
+    success = False
+
+    try:
+      with get_dbConn() as dbconn:
+        with dbconn.cursor() as cursor:
+          dbconn.begin()
+          try:
+            cursor.execute( query )
+            dbconn.commit()
+            success = True
+          except Exception as err:
+            dbconn.rollback()
+            lg.error( "delete_images.clear_db():" )
+            lg.error( str( err ) )
+
+    except Exception as err:
+      lg.error( "delete_images.clear_db():" )
+      lg.error( str( err ) )
+
+    return success
+
+  def clear_bucket( bucketkeys ):
+    success = False
+    try:
+      bkt = get_bucket()
+      bkt.delete_objects( Delete={ 'Objects': bucketkeys } )
+      success = True
+    except Exception as err:
+      lg.error( "delete_images.clear_bucket():" )
+      lg.error( str( err ) )
+    finally:
+      try:
+        bucket.close()
+      except:
+        pass
+
+    return success
+
+  bucketkeys = getbucketkeys()
+  if not bucketkeys:
+    return False
+
+  if not clear_db():
+    return False
+
+  if not clear_bucket( bucketkeys ):
+    return False
+
+  return True
 
