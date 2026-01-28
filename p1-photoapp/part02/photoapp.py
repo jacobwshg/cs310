@@ -929,3 +929,63 @@ def get_image_labels( assetid ):
  
   return labels
 
+###################################################################
+#
+# get_images_with_label
+#
+#@RETRY_3
+@retry(
+  stop=stop_after_attempt( 3 ),
+  wait=wait_exponential(multiplier=1, min=2, max=30),
+  reraise=True
+) 
+def get_images_with_label( label ):
+  """
+  When an image is uploaded to S3, the Rekognition AI slop is
+  automatically called to label objects in the image. These labels
+  are then stored in the database for retrieval / search. Given a
+  label (partial such as 'boat' or complete 'sailboat'), this
+  function performs a case-insensitive search for all images with
+  this label. The function returns a list of images, where each
+  element of the list is a tuple of the form 
+  (assetid, label, confidence). 
+  The list is returned in order by assetid, and for
+  all elements with the same assetid, ordered by label. If an
+  error occurs, an exception is raised.
+
+  Parameters
+  ----------
+  label to search for, this can be a partial word (e.g. 'boat')
+
+  Returns
+  -------
+  a list of images that contain this label, even partial matches.
+  Each element of the list is a tuple (assetid, label, confidence)
+  where assetid identifies the image, label is a string, and
+  confidence is an integer. The list is returned in order by
+  assetid, and for all elements with the same assetid, ordered
+  by label. If an error occurs, an exception is raised.
+  """
+
+  res = None
+
+  pattern = f"%{label}%"
+
+  query = """
+    Select assetid, label, confidence
+    From labels
+    Where label Like %s
+    Order By assetid Asc, label Asc; 
+  """
+
+  try:
+    with get_dbConn() as dbconn:
+      with dbconn.cursor() as cursor:
+        cursor.execute( query, ( pattern, ) )
+        res = cursor.fetchall()
+  except Exception as err:
+    lg.error( "get_images_with_label():" )
+    lg.error( str( err ) )
+
+  return res
+

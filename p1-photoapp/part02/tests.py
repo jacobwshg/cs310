@@ -95,6 +95,16 @@ class PhotoappTests(unittest.TestCase):
 
     print( photoapp.get_image_labels( aid ) )
 
+  def test_get_images_with_label( self ):
+    print()
+    print("** test_get_images_with_label **")
+
+    label = "o"
+
+    print( photoapp.get_images_with_label( label ) )
+
+
+
 ############################################################
 #
 # main
