@@ -386,13 +386,28 @@ def get_ping():
 
 import logging as lg
 
+###################################################################
+#
+# get_users
+#
 @RETRY_3
 def get_users():
   """
-  Return a list of all users in the database.
-  Each element in the list is a tuple containing
-  (userid, username, givennamem, familyname).
-  The tuples are ordered by userid, ascending. 
+  Returns a list of all the users in the database. Each element
+  of the list is a tuple containing userid, username, givenname
+  and familyname (in that order). The tuples are ordered by userid,
+  ascending. If an error occurs, an exception is raised.
+
+  Parameters
+  ----------
+  N/A
+
+  Returns
+  -------
+  a list of all the users, where each element of the list is a tuple
+  containing userid, username, givenname, and familyname in that order.
+  The list is ordered by userid, ascending. On error an exception is
+  raised.
   """
   query = """
     Select userid, username, givenname, familyname
@@ -413,8 +428,12 @@ def get_users():
 
   return res
 
+###################################################################
+#
+# get_images
+#
 @RETRY_3
-def get_images( userid=None ):
+def get_images(userid = None):
   """
   Returns a list of all the images in the database. Each element
   of the list is a tuple containing assetid, userid, localname
@@ -427,6 +446,7 @@ def get_images( userid=None ):
   Parameters
   ----------
   userid (optional) filters the returned images for just this userid
+
   Returns
   -------
   a list of images, where each element of the list is a tuple
@@ -462,14 +482,30 @@ def get_images( userid=None ):
 
   return res
 
-def post_image( userid, local_filename ):
+###################################################################
+#
+# post_image
+#
+def post_image(userid, local_filename):
   """
-  Uploads an image to S3 with a unique name, allowing the same local file
-  to be uploaded multiple times if desired.
-  A record of this image is inserted into the database, and upon success
-  a unique assetid is returned to identify this image.
+  Uploads an image to S3 with a unique name, allowing the same local
+  file to be uploaded multiple times if desired. A record of this
+  image is inserted into the database, and upon success a unique
+  assetid is returned to identify this image. The image is also
+  analyzed by the Rekognition AI slop to label objects within
+  the image; the results of this analysis are also saved in the
+  database (and can be retrieved later via get_image_labels). If
+  an error occurs, an exception is raised. An invalid userid is
+  considered a ValueError, "no such userid".
 
-  An invalid userid is considered a ValueError, "no such userid".
+  Parameters
+  ----------
+  userid for whom we are uploading this image
+  local filename of image to upload
+
+  Returns
+  -------
+  image's assetid upon success, raises an exception on error
   """
 
   import uuid
