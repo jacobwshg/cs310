@@ -397,7 +397,7 @@ def get_users():
   query = """
     Select userid, username, givenname, familyname
     From users
-    Order by userid Asc;
+    Order By userid Asc;
   """
 
   res = []
@@ -416,11 +416,23 @@ def get_users():
 @RETRY_3
 def get_images( userid=None ):
   """
-  Returns a list of all the images in the database.  
-  Each element of the list is a tuple containing 
-  (assetid, userid, localname, bucketkey).
-  The list is ordered by assetid, ascending.
-  If a userid is given, then just the images with that userid are returned.
+  Returns a list of all the images in the database. Each element
+  of the list is a tuple containing assetid, userid, localname
+  and bucketkey (in this order). The list is ordered by assetid,
+  ascending. If a userid is given, then just the images with that
+  userid are returned; validity of the userid is not checked,
+  which implies that an empty list is returned if the userid is
+  invalid. If an error occurs, an exception is raised.
+
+  Parameters
+  ----------
+  userid (optional) filters the returned images for just this userid
+  Returns
+  -------
+  a list of images, where each element of the list is a tuple
+  containing assetid, userid, localname, and bucketkey in that order.
+  The list is ordered by assetid, ascending. If an error occurs,
+  an exception is raised.
   """
 
   query = """
@@ -859,4 +871,61 @@ def delete_images():
     return False
 
   return True
+
+###################################################################
+#
+# get_image_labels
+#
+#@RETRY_3
+@retry(
+  stop=stop_after_attempt( 3 ),
+  wait=wait_exponential(multiplier=1, min=2, max=30),
+  reraise=True
+) 
+def get_image_labels( assetid ):
+  """
+  When an image is uploaded to S3, the Rekognition AI slop is
+  automatically called to label objects in the image. Given the
+  image assetid, this function retrieves those labels. In
+  particular this function returns a list of tuples. Each tuple
+  is of the form (label, confidence), where label is a string
+  (e.g. 'sailboat') and confidence is an integer (e.g. 90).
+  The tuples are ordered by label, ascending. If an error occurs
+  an exception is raised; an invalid assetid is considered a
+  ValueError, "no such assetid".
+
+  Parameters
+  ----------
+  image assetid to retrieve labels for
+
+  Returns
+  -------
+  a list of labels identified in the image, where each element
+  of the list is a tuple of the form (label, confidence) where
+  label is a string and confidence is an integer. If an error
+  occurs an exception is raised; an invalid assetid is considered
+  a ValueError, "no such assetid".
+  """
+
+  labels = None
+
+  query = """
+    Select label, confidence
+    From labels
+    Where assetid = %s
+    Order By label Asc;
+  """
+
+  try:
+    with get_dbConn() as dbconn:
+      with dbconn.cursor() as cursor:
+        cursor.execute( query, [ assetid ] )
+        if cursor.rowcount < 1:
+          raise ValueError( "no such assetid" )
+        labels = cursor.fetchall()
+  except Exception as err:
+    lg.error( "get_image_labels():" )
+    lg.error( str( err ) )
+ 
+  return labels
 

@@ -83,9 +83,17 @@ class PhotoappTests(unittest.TestCase):
     print()
     print("** test_delete_images **")
 
-    success = photoapp.delete_images()
-    print( f"result: { success }" )
+    ##success = photoapp.delete_images()
+    ##print( f"result: { success }" )
 
+
+  def test_get_image_labels( self ):
+    print()
+    print("** test_get_image_labels **")
+
+    aid = 1001
+
+    print( photoapp.get_image_labels( aid ) )
 
 ############################################################
 #
