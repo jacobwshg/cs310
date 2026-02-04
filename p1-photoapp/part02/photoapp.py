@@ -686,12 +686,12 @@ def post_image(userid, local_filename):
 
         except Exception as err:
           dbconn.rollback()
-          lg.error( "delete_images.update_labels():" )
+          lg.error( "post_image.update_labels():" )
           lg.error( str( err ) )
           raise
 
     except Exception as err:
-      lg.error( "delete_images.update_labels():" )
+      lg.error( "post_image.update_labels():" )
       lg.error( str( err ) )
       raise
 
