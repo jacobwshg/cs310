@@ -515,6 +515,9 @@ def post_image(userid, local_filename):
 
   import uuid
 
+  # strip parent directories for filename to be recorded in DB
+  pure_local_fname = local_filename[ local_filename.rfind('/')+1: ]
+
   @RETRY_3
   def lookup_user():
     username = None
@@ -551,9 +554,11 @@ def post_image(userid, local_filename):
           '/',
           str( uuid.uuid4() ),
           '-',
-          local_filename
+          pure_local_fname
         ]
       )
+      print( f"post_image local_filename: {local_filename}" )
+      print( f"post_image _bktkey: {_bktkey}" )
       bkt.upload_file( local_filename, _bktkey )
       bucketkey = _bktkey
     except Exception as err:
@@ -580,7 +585,7 @@ def post_image(userid, local_filename):
         try:
           dbconn.begin()
           with dbconn.cursor() as cursor:
-            cursor.execute( query, [ userid, local_filename, bucketkey ] )
+            cursor.execute( query, [ userid, pure_local_fname, bucketkey ] )
           dbconn.commit()
           success = True
         except Exception as err:
@@ -691,8 +696,6 @@ def post_image(userid, local_filename):
       raise
 
     return success
-
-  local_filename = local_filename.strip( './\\' ) 
 
   username = lookup_user()
   if not username:
