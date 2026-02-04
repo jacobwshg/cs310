@@ -214,7 +214,7 @@ class ImagePopup(QWidget):
         self.setLayout(layout)
 
 if __name__ == "__main__":
-    CONFIG = "../part02/photoapp-config.ini"
+    CONFIG = "photoapp-config.ini"
     S3_UNAME = "s3readwrite"
     RDS_UNAME = "photoapp-read-write"
 
