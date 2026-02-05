@@ -534,7 +534,7 @@ def post_image(userid, local_filename):
             case 1:
               username = cursor.fetchone()[0]
             case 0:
-              raise ValueError( "no such userid" )
+              raise ValueError( "post_image(): no such userid" )
             case _:
               raise ValueError( "unexpected duplicate userid" )
     except Exception as err:
@@ -761,9 +761,9 @@ def get_image( assetid, local_filename=None ):
         case 1:
           db_localname, bucketkey = cursor.fetchone()
         case 0:
-          raise ValueError( "no such assetid" )
+          raise ValueError( "get_image(): no such assetid" )
         case _:
-          raise ValueError( "unexpected duplicate assetid" )
+          raise ValueError( "get_image(): unexpected duplicate assetid" )
     except Exception as err:
       lg.error( "get_image.get_db_record():" )
       lg.error( str( err ) )
@@ -965,7 +965,7 @@ def get_image_labels( assetid ):
 
         cursor.execute( aid_query, [ assetid ] )
         if cursor.rowcount < 1:
-          raise ValueError( "no such assetid" )
+          raise ValueError( "get_image_labels(): no such assetid" )
 
         cursor.execute( labels_query, [ assetid ] )
         labels = list( cursor.fetchall() )
