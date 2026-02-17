@@ -69,12 +69,15 @@ app.get('/', (request, response) => {
 
     console.log("sending response...");
 
-    response.json({
-      "status": "running",
-      "uptime_in_secs": uptime,
-    });
+    response.json(
+      {
+        "status": "running",
+        "uptime_in_secs": uptime,
+      }
+    );
   }
-  catch(err) {
+  catch ( err )
+  {
     console.log("ERROR:");
     console.log(err.message);
 
@@ -82,10 +85,12 @@ app.get('/', (request, response) => {
     // if something goes wrong it's our fault, ==> use a
     // status code of 500 ==> server-side error:
     //
-    response.status(500).json({
-      "status": err.message,
-      "uptime_in_secs": uptime,
-    });
+    response.status(500).json(
+      {
+        "status": err.message,
+        "uptime_in_secs": uptime,
+      }
+    );
   }
 });
 
@@ -107,4 +112,10 @@ app.get('/users', get_users_file.get_users);
 //
 // load and define more API functions 
 //
+//
+// 3. app.get('/images', async (request, response) => {...});
+//
+let get_images_file = require('./api_get_images.js');
+app.get( '/images', get_images_file.get_images );
+
 

@@ -78,6 +78,44 @@ except Exception as err:
   print(str(err))
 
 #
+# get_images:
+#
+try:
+  print("**get_images:")
+  imgs = photoapp.get_images()
+
+  for img in imgs:
+    print( img )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
+try:
+  userid = 80001
+  print(f"**get_images with userid { userid }:")
+  imgs = photoapp.get_images( userid )
+
+  for img in imgs:
+    print( img )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
+try:
+  userid = "melchizedek solomonovich"
+  print(f"**get_images with userid { userid }:")
+  imgs = photoapp.get_images( userid )
+
+  for img in imgs:
+    print( img )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
+#
 # done:
 #
 print()

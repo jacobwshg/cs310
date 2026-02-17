@@ -17,6 +17,8 @@ const { get_dbConn } = require('./helper.js');
 const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
 
 
+module.exports = { get_users };
+
 /**
  * get_users:
  * 
@@ -30,7 +32,8 @@ const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry
  * @param none
  * @returns JSON {message: string, data: [object, object, ...]} 
  */
-exports.get_users = async (request, response) => {
+async function get_users(request, response)
+{
 
   async function try_get_users()
   {
@@ -114,3 +117,4 @@ exports.get_users = async (request, response) => {
   }
 
 };
+

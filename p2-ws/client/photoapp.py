@@ -8,7 +8,7 @@
 #   Northwestern University
 #
 
-import logging
+import logging as lg
 import requests
 from requests.exceptions import HTTPError, ConnectionError, Timeout
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -67,8 +67,8 @@ def initialize(client_config_file):
     return True
 
   except Exception as err:
-    logging.error("initialize():")
-    logging.error(str(err))
+    lg.error("initialize():")
+    lg.error(str(err))
     raise
 
 
@@ -148,8 +148,8 @@ def get_ping():
       response.raise_for_status()
 
   except Exception as err:
-    logging.error("get_ping():")
-    logging.error(str(err))
+    lg.error("get_ping():")
+    lg.error(str(err))
     #
     # raise exception to trigger retry mechanism if appropriate:
     #
@@ -243,8 +243,8 @@ def get_users():
       response.raise_for_status()
 
   except Exception as err:
-    logging.error("get_users():")
-    logging.error(str(err))
+    lg.error("get_users():")
+    lg.error(str(err))
     #
     # raise exception to trigger retry mechanism if appropriate:
     #
@@ -283,8 +283,73 @@ def get_images(userid = None):
   underlying web service.
   """
 
-  raise Exception("TODO")
-    
+  try:
+    baseurl = WEB_SERVICE_URL
+
+    url = baseurl + "/images"
+    if userid:
+      url += f"?userid={ userid }"
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+      #
+      # success
+      #
+      body = response.json()
+      rows = body['data']
+
+      #
+      # rows is a dictionary-like list of objects, so
+      # let's extract the values and discard the keys
+      # to honor the API's return value:
+      #
+      imgs = []
+
+      for row in rows:
+        assetid   = row["assetid"]
+        userid    = row["userid"]
+        localname = row["localname"]
+        bucketkey = row["bucketkey"]
+        #
+        img = ( assetid, userid, localname, bucketkey )
+        imgs.append( img )
+
+      return imgs
+    elif response.status_code == 500:
+      #
+      # failed:
+      #
+      body = response.json()
+      msg = body['message']
+      err_msg = f"status code {response.status_code}: {msg}"
+      #
+      # NOTE: this exception will not trigger retry mechanism,
+      # since we reached the server and the server-side failed,
+      # and we are assuming the server-side is also doing retries.
+      #
+      raise HTTPError(err_msg)
+    else:
+      #
+      # something unexpected happened, and in this case we don't
+      # have a JSON-based response, so let Python raise proper
+      # HTTPError for us:
+      #
+      response.raise_for_status()
+
+  except Exception as err:
+    lg.error("get_users():")
+    lg.error(str(err))
+    #
+    # raise exception to trigger retry mechanism if appropriate:
+    #
+    raise
+
+  finally:
+    # nothing to do
+    pass
+
+  
 
 ###################################################################
 #

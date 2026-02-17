@@ -16,7 +16,9 @@ const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
 // p_retry requires the use of a dynamic import:
 // const pRetry = require('p-retry');
 //
-const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
+const pRetry = (...args) => import('p-retry').then(
+      ({default: pRetry}) => pRetry(...args)
+  );
 
 
 /**
@@ -84,7 +86,10 @@ exports.get_ping = async (request, response) => {
     console.log("**Call to get /ping...");
 
     let promise_s3 = get_M();
-    let promise_mysql = pRetry( () => get_N(), {retries: 2} );
+    let promise_mysql = pRetry(
+      () => get_N(),
+      { retries: 2 }
+    );
 
     //
     // wait for database and S3 to complete, if an error occurs
