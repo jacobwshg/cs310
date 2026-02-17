@@ -5,7 +5,7 @@
 // defined in separate JS files for easier development.
 //
 // Authors:
-//  YOUR NAME
+//  Jacob Wang
 //  Prof. Joe Hummel (initial template)
 //  Northwestern University
 //
@@ -112,10 +112,9 @@ app.get('/users', get_users_file.get_users);
 //
 // load and define more API functions 
 //
-//
-// 3. app.get('/images', async (request, response) => {...});
-//
 let get_images_file = require('./api_get_images.js');
 app.get( '/images', get_images_file.get_images );
 
+let post_image_file = require( './api_post_image.js' );
+app.post( '/image/:userid', post_image_file.post_image );
 

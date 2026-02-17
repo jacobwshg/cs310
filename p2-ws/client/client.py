@@ -47,7 +47,6 @@ if not success:
   sys.exit(0)
 
 print()
-
 #
 # get_ping:
 #
@@ -77,6 +76,8 @@ except Exception as err:
   print("CLIENT ERROR:")
   print(str(err))
 
+print()
+
 #
 # get_images:
 #
@@ -91,6 +92,9 @@ except Exception as err:
   print("CLIENT ERROR:")
   print(str(err))
 
+print()
+
+
 try:
   userid = 80001
   print(f"**get_images with userid { userid }:")
@@ -103,6 +107,9 @@ except Exception as err:
   print("CLIENT ERROR:")
   print(str(err))
 
+print()
+
+
 try:
   userid = "melchizedek solomonovich"
   print(f"**get_images with userid { userid }:")
@@ -114,6 +121,24 @@ try:
 except Exception as err:
   print("CLIENT ERROR:")
   print(str(err))
+
+print()
+
+#
+# post_image:
+#
+try:
+  userid = 80001
+  path = "./chicago.jpg"
+  print(f"**post_image: { userid } { path } ")
+  assetid = photoapp.post_image( userid, path )
+
+  print( assetid )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
 
 #
 # done:
