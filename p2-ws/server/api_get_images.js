@@ -50,6 +50,7 @@ async function get_images( request, response )
 		`;
 		if ( userid >= 0 )
 		{
+			console.log( `get_images() positive userid ${ userid }` );
 			sql += `
 				Where userid = ?
 			`;
@@ -69,7 +70,7 @@ async function get_images( request, response )
 			//
 			console.log( "executing SQL..." );
 
-			let [ rows, _ ] = await dbConn.execute(
+			let [ rows, _colinfo ] = await dbConn.execute(
 				sql,
 				userid ? [ userid, ] : []
 			);
@@ -78,6 +79,9 @@ async function get_images( request, response )
 			// success, return rows from DB:
 			//
 			console.log( `done, retrieved ${rows.length} rows` );
+
+			console.log( "get_images() rows:" );
+			console.log( rows );
 
 			return rows;
 		}
@@ -115,7 +119,7 @@ async function get_images( request, response )
 	{
 		console.log( "**Call to get /images..." );
 
-		let userid = -1;
+		userid = -1;
 		if ( request.query.userid )
 		{
 			userid = parseInt( request.query.userid );
@@ -126,7 +130,7 @@ async function get_images( request, response )
 		}
 
 		const rows = await pRetry(
-			() => try_get_images(),
+			() => try_get_images( userid ),
 			{ retries: 2 }
 		);
 

@@ -76,7 +76,7 @@ async function post_image( request, response )
 			{
 				throw new Error( "post_image: unexpected duplicate userid" );
 			}
-			return rows.username;
+			return rows[0][ 'username' ];
 		}
 		catch ( err )
 		{
