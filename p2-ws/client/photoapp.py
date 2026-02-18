@@ -589,7 +589,10 @@ def get_images_with_label(label):
 			#
 			json = response.json()
 			rows = json[ "data" ]
-			return rows
+			return [ \
+				( row[ 'assetid' ], row[ 'label' ], row[ 'confidence' ] ) \
+				for row in rows \
+			]
 		else:
 			catch_resp_error( response )
 
