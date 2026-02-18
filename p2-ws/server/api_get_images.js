@@ -17,8 +17,8 @@ const { ValueError } = require( "./helper.js" );
 // p_retry requires the use of a dynamic import:
 // const pRetry = require('p-retry');
 //
-//const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
-const { pRetry } = require( "./helper.js" );
+const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
+//const { pRetry } = require( "./helper.js" );
 
 module.exports = { get_images };
 

@@ -466,6 +466,7 @@ def get_image(assetid, local_filename = None):
 #
 # get_image_labels
 #
+@RETRY_DEF
 def get_image_labels(assetid):
 	"""
 	When an image is uploaded to S3, Rekognition is
@@ -530,6 +531,7 @@ def get_image_labels(assetid):
 #
 # get_images_with_label
 #
+@RETRY_DEF
 def get_images_with_label(label):
 	"""
 	When an image is uploaded to S3, Rekognition is
@@ -595,6 +597,7 @@ def get_images_with_label(label):
 #
 # delete_images
 #
+@RETRY_DEF
 def delete_images():
 	"""
 	Delete all images and associated labels from the database and 

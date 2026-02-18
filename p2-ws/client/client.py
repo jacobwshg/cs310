@@ -255,11 +255,11 @@ if __name__ == "__main__":
 	init()
 	run_ping()
 
-	#"""
+	"""
 
 	run_get_users()
 
-	#run_post_img()
+	run_post_img()
 
 	run_get_imgs()
 	run_get_imgs_uid( )
@@ -271,10 +271,9 @@ if __name__ == "__main__":
 
 	run_get_labels( 1001 )
 	
+	run_GIWL( label='a' )
 
-	run_GIWL( label='f' )
-
-	#"""
+	"""
 
 	#run_del_imgs()
 	
