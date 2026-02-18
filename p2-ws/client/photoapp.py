@@ -218,7 +218,6 @@ def get_users():
 	exception is raised; exceptions of type HTTPError are from the 
 	underlying web service.
 	"""
-
 	try:
 		baseurl = WEB_SERVICE_URL
 
@@ -252,28 +251,6 @@ def get_users():
 			return users
 		else:
 			catch_resp_error( response )
-		"""
-		elif response.status_code == 500:
-			#
-			# failed:
-			#
-			body = response.json()
-			msg = body['message']
-			err_msg = f"status code {response.status_code}: {msg}"
-			#
-			# NOTE: this exception will not trigger retry mechanism, 
-			# since we reached the server and the server-side failed, 
-			# and we are assuming the server-side is also doing retries.
-			#
-			raise HTTPError(err_msg)
-		else:
-			# 
-			# something unexpected happened, and in this case we don't 
-			# have a JSON-based response, so let Python raise proper
-			# HTTPError for us:
-			#
-			response.raise_for_status()
-		"""
 
 	except Exception as err:
 		lg.error("get_users():")
@@ -596,5 +573,35 @@ def delete_images():
 	True if successful, raises an exception on error
 	"""
 
-	raise Exception("TODO")
+	try:
+		baseurl = WEB_SERVICE_URL
+
+		url = baseurl + "/images"
+
+		response = requests.delete( url )
+
+		if response.status_code == 200:
+			#
+			# success
+			#
+			json = response.json()
+			msg = json[ 'message' ]
+			print(f"message: { msg }")
+			return "success" in msg.lower();
+		else:
+			catch_resp_error( response )
+
+	except Exception as err:
+		lg.error("get_users():")
+		lg.error(str(err))
+		#
+		# raise exception to trigger retry mechanism if appropriate:
+		#
+		raise
+
+	finally:
+		# nothing to do
+		pass
+
+
 

@@ -115,7 +115,7 @@ async function post_image( request, response )
 			//
 			console.log( "ERROR in post_image.upload_to_bucket():" );
 			console.log( err.message );
-			throw err;	// re-raise exception to trigger retry mechanism
+			throw err;
 		}
 	}
 
@@ -126,6 +126,7 @@ async function post_image( request, response )
 			Insert Into assets( userid, localname, bucketkey )
 			Values( ?, ?, ? );
 		`
+		await dbConn.beginTransaction();
 		try
 		{
 			const [ info ] = await dbConn.execute(
@@ -142,9 +143,10 @@ async function post_image( request, response )
 			//
 			// exception:
 			//
+			await dbConn.rollback();
 			console.log( "ERROR in post_image.update_db():" );
 			console.log( err.message );
-			throw err;	// re-raise exception to trigger retry mechanism
+			throw err;
 		}
 	}
 
@@ -182,6 +184,7 @@ async function post_image( request, response )
 			Insert Into labels( assetid, label, confidence )
 			Values( ?, ?, ? );
 		`
+		await dbConn.beginTransaction();
 		try
 		{
 			for ( let label of rkg_labels.Labels )
@@ -197,9 +200,10 @@ async function post_image( request, response )
 			//
 			// exception:
 			//
+			await dbConn.rollback();
 			console.log( "ERROR in post_image.update_labels():" );
 			console.log( err.message );
-			throw err;	// re-raise exception to trigger retry mechanism
+			throw err;
 		}
 	}
 

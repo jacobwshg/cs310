@@ -80,8 +80,8 @@ async function get_images( request, response )
 			//
 			console.log( `done, retrieved ${rows.length} rows` );
 
-			console.log( "get_images() rows:" );
-			console.log( rows );
+			//console.log( "get_images() rows:" );
+			//console.log( rows );
 
 			return rows;
 		}

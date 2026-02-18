@@ -77,7 +77,7 @@ get_image( request, response )
 			console.log( "ERROR in get_image.validate_assetid():" );
 			console.log( err.message );
 
-			throw err;	// re-raise exception to trigger retry mechanism
+			throw err; // re-raise exception to trigger retry mechanism
 		}
 	}
 
@@ -107,7 +107,7 @@ get_image( request, response )
 			//
 			console.log( "ERROR in get_image.download_file():" );
 			console.log( err.message );
-			throw err;	// re-raise exception to trigger retry mechanism
+			throw err;
 		}
 	}
 
