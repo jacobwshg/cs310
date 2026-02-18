@@ -259,7 +259,7 @@ if __name__ == "__main__":
 
 	run_get_users()
 
-	run_post_img()
+	#run_post_img()
 
 	run_get_imgs()
 	run_get_imgs_uid( )

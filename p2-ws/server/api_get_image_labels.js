@@ -11,6 +11,7 @@
 
 const mysql2 = require('mysql2/promise');
 const { get_dbConn } = require('./helper.js');
+const { ValueError } = require( "./helper.js" );
 //
 // p_retry requires the use of a dynamic import:
 // const pRetry = require('p-retry');
@@ -58,7 +59,7 @@ async function get_image_labels( request, response )
 
 			if ( rows.length < 1 )
 			{
-				throw new Error( "no such assetid" );
+				throw new ValueError( "no such assetid" );
 			}
 			else if ( rows.length > 1 )
 			{
@@ -151,12 +152,8 @@ async function get_image_labels( request, response )
 		//
 		console.log( "ERROR:" );
 		console.log( err.message );
-
-		//
-		// if an error occurs it's our fault, so use status code
-		// of 500 => server-side error:
-		//
-		response.status(500).json(
+		const stat = err instanceof ValueError ? 400 : 500; 
+		response.status( stat ).json(
 			{
 				message: err.message,
 				data:    [],

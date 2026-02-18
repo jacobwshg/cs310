@@ -12,12 +12,13 @@
 
 const mysql2 = require('mysql2/promise');
 const { get_dbConn } = require('./helper.js');
+const { ValueError } = require( "./helper.js" );
 //
 // p_retry requires the use of a dynamic import:
 // const pRetry = require('p-retry');
 //
-const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
-
+//const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
+const { pRetry } = require( "./helper.js" );
 
 module.exports = { get_images };
 
@@ -127,7 +128,7 @@ get_images( request, response )
 		}
 		if ( isNaN( userid ) ) 
 		{
-			throw new Error( "get_images(): userid is not numeric" );
+			throw new ValueError( "userid is not numeric" );
 		}
 
 		const rows = await pRetry(
@@ -155,11 +156,8 @@ get_images( request, response )
 		console.log( "ERROR:" );
 		console.log( err.message );
 
-		//
-		// if an error occurs it's our fault, so use status code
-		// of 500 => server-side error:
-		//
-		response.status(500).json(
+		const stat = err instanceof ValueError ? 400 : 500;
+		response.status( stat ).json(
 			{
 				message: err.message,
 				data: [],

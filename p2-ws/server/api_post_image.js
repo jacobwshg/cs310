@@ -13,6 +13,7 @@
 
 const mysql2 = require('mysql2/promise');
 const { get_dbConn, get_bucket, get_bucket_name, get_rekognition } = require('./helper.js');
+const { ValueError } = require( "./helper.js" );
 const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
 
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
@@ -70,11 +71,11 @@ async function post_image( request, response )
 
 			if ( rows.length < 1 )
 			{
-				throw new Error( "post_image: no such userid" );
+				throw new ValueError( "no such userid" );
 			}
 			else if ( rows.length > 1 )
 			{
-				throw new Error( "post_image: unexpected duplicate userid" );
+				throw new Error( "unexpected duplicate userid" );
 			}
 			return rows[0][ 'username' ];
 		}
@@ -214,7 +215,7 @@ async function post_image( request, response )
 		const userid = parseInt( request.params[ 'userid' ] );
 		if ( isNaN( userid ) )
 		{
-			throw new Error( `post_image: userid is not numeric` );
+			throw new ValueError( "post_image: userid is not numeric" );
 		}
 		console.log( `post_image userid: ${ userid }` );
 		const { local_filename, img_str } = request.body;
@@ -267,8 +268,8 @@ async function post_image( request, response )
 		//
 		console.log("ERROR:");
 		console.log(err.message);
-
-		response.status(500).json(
+		const stat = err instanceof ValueError ? 400 : 500;
+		response.status( stat ).json(
 			{
 				message: err.message,
 				assetid: -1,

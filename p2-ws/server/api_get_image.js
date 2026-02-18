@@ -12,6 +12,7 @@
 
 const mysql2 = require('mysql2/promise');
 const { get_dbConn, get_bucket, get_bucket_name, get_rekognition } = require('./helper.js');
+const { ValueError } = require( "./helper.js" );
 const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
 
 const { GetObjectCommand } = require("@aws-sdk/client-s3");
@@ -60,11 +61,11 @@ get_image( request, response )
 
 			if ( rows.length < 1 )
 			{
-				throw new Error( "get_image: no such assetid" );
+				throw new ValueError( "no such assetid" );
 			}
 			else if ( rows.length > 1 )
 			{
-				throw new Error( "get_image: unexpected duplicate assetid" );
+				throw new Error( "unexpected duplicate assetid" );
 			}
 			const row = rows[0];
 			return row;
@@ -116,7 +117,7 @@ get_image( request, response )
 		const assetid = parseInt( request.params[ 'assetid' ] );
 		if ( isNaN( assetid ) )
 		{
-			throw new Error( `get_image: assetid is not numeric` );
+			throw new ValueError( "assetid is not numeric" );
 		}
 		console.log( `get_image assetid: ${ assetid }` );
 
@@ -155,7 +156,8 @@ get_image( request, response )
 		console.log("ERROR in get_image():");
 		console.log(err.message);
 
-		response.status(500).json(
+		const stat = err instanceof ValueError ? 400 : 500;
+		response.status( stat ).json(
 			{
 				message: err.message,
 				userid:  -1,

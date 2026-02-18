@@ -14,6 +14,30 @@ const { RekognitionClient } = require('@aws-sdk/client-rekognition');
 const { S3Client } = require('@aws-sdk/client-s3');
 const { fromIni } = require('@aws-sdk/credential-providers');
 
+class ValueError extends Error
+{
+	constructor( msg )
+	{
+		super( msg);
+		this.name = "ValueError";
+	}
+}
+
+const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
+
+//
+// list the functions we are exporting:
+//
+module.exports =
+	{
+		ValueError,
+		pRetry,
+		get_dbConn,
+		get_bucket,
+		get_bucket_name,
+		get_rekognition,
+	};
+
 
 /** 
  * async get_dbConn
@@ -145,8 +169,4 @@ function get_rekognition()
 }
 
 
-//
-// list the functions we are exporting:
-//
-module.exports = { get_dbConn, get_bucket, get_bucket_name, get_rekognition };
 

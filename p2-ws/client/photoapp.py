@@ -36,8 +36,8 @@ def catch_resp_error( response ):
 		#
 		# failed:
 		#
-		body = response.json()
-		msg = body['message']
+		json = response.json()
+		msg = json[ 'message' ]
 		err_msg = f"status code {response.status_code}: {msg}"
 		#
 		# NOTE: this exception will not trigger retry mechanism, 
@@ -45,6 +45,10 @@ def catch_resp_error( response ):
 		# and we are assuming the server-side is also doing retries.
 		#
 		raise HTTPError(err_msg)
+
+	elif response.status_code == 400:
+		raise ValueError( response.json()[ 'message' ] )
+
 	else:
 		# 
 		# something unexpected happened, and in this case we don't 
@@ -151,34 +155,12 @@ def get_ping():
 			#
 			# success
 			#
-			body = response.json()
-			M = body['M']
-			N = body['N']
+			json = response.json()
+			M = json['M']
+			N = json['N']
 			return (M, N)
 		else:
 			catch_resp_error( response )
-		"""
-		elif response.status_code == 500:
-			#
-			# failed:
-			#
-			body = response.json()
-			msg = body['message']
-			err_msg = f"status code {response.status_code}: {msg}"
-			#
-			# NOTE: this exception will not trigger retry mechanism, 
-			# since we reached the server and the server-side failed, 
-			# and we are assuming the server-side is also doing retries.
-			#
-			raise HTTPError(err_msg)
-		else:
-			# 
-			# something unexpected happened, and in this case we don't 
-			# have a JSON-based response, so let Python raise proper
-			# HTTPError for us:
-			#
-			response.raise_for_status()
-		"""
 
 	except Exception as err:
 		lg.error("get_ping():")
@@ -229,8 +211,8 @@ def get_users():
 			#
 			# success
 			#
-			body = response.json()
-			rows = body['data']
+			json = response.json()
+			rows = json['data']
 
 			# 
 			# rows is a dictionary-like list of objects, so
@@ -307,8 +289,8 @@ def get_images(userid = None):
 			#
 			# success
 			#
-			body = response.json()
-			rows = body['data']
+			json = response.json()
+			rows = json['data']
 
 			#
 			# rows is a dictionary-like list of objects, so
