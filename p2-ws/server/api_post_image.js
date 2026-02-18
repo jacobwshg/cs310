@@ -212,7 +212,7 @@ async function post_image( request, response )
 		}
 		console.log( `post_image userid: ${ userid }` );
 		const { local_filename, img_str } = request.body;
-		const img_bytes = Buffer.from( img_str, `base64` );
+		const img_bytes = Buffer.from( img_str, 'base64' );
 
 		/* Lookup user */
 		const username = await pRetry(
@@ -241,14 +241,15 @@ async function post_image( request, response )
 			{ retries: 2 } 
 		);
 
-		const scs_str = `post_image(): success, assetid:${ assetid }`;
+		//const scs_str = `post_image(): success, assetid:${ assetid }`;
+		const scs_str = "success";
 		console.log( scs_str );
 		response.json(
 			{
 				message: scs_str,
 				assetid: assetid,
 			}
-		)
+		);
 	}
 	catch (err)
 	{
@@ -260,8 +261,8 @@ async function post_image( request, response )
 
 		response.status(500).json(
 			{
-				"message": err.message,
-				"assetid": -1,
+				message: err.message,
+				assetid: -1,
 			}
 		);
 	}

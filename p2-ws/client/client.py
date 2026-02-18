@@ -138,6 +138,49 @@ except Exception as err:
   print("CLIENT ERROR:")
   print(str(err))
 
+#
+# get_image:
+#
+try:
+  assetid = 1002
+  print(f"**get_image: { assetid } ")
+  local_filename = photoapp.get_image( assetid )
+
+  print( local_filename )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
+print()
+
+try:
+  assetid = 1002
+  localname = "out_img.jpg"
+  print(f"**get_image: { assetid } { localname } ")
+  local_filename = photoapp.get_image( assetid, local_filename=localname )
+
+  print( local_filename )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
+print()
+
+try:
+  assetid = 607
+  print(f"**get_image: { assetid } ")
+  local_filename = photoapp.get_image( assetid )
+
+  print( local_filename )
+    
+except Exception as err:
+  print("CLIENT ERROR:")
+  print(str(err))
+
+print()
+
 
 #
 # done:

@@ -17,11 +17,20 @@ from configparser import ConfigParser
 import base64
 
 #
-# module-level varibles:
+# module-level variables:
 #
 WEB_SERVICE_URL = 'set via call to initialize()'
 
+RETRY_DEF = retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 
+#
+# Modularized logic for handling response errors
+#
 def catch_resp_error( response ):
 	if response.status_code == 500:
 		#
@@ -111,11 +120,7 @@ def initialize(client_config_file):
 # is raised. Exceptions of type HTTPError are from the underlying
 # web service.
 #
-@retry(stop=stop_after_attempt(3), 
-				wait=wait_exponential(multiplier=1, min=2, max=30),
-				retry=retry_if_exception_type((ConnectionError, Timeout)),
-				reraise=True
-			)
+@RETRY_DEF
 def get_ping():
 	"""
 	Based on the configuration file, retrieves the # of items in the S3 bucket and
@@ -192,11 +197,7 @@ def get_ping():
 #
 # get_users
 #
-@retry(stop=stop_after_attempt(3), 
-				wait=wait_exponential(multiplier=1, min=2, max=30),
-				retry=retry_if_exception_type((ConnectionError, Timeout)),
-				reraise=True
-			)
+@RETRY_DEF
 def get_users():
 	"""
 	Returns a list of all the users in the database. Each element 
@@ -291,6 +292,7 @@ def get_users():
 #
 # get_images
 #
+@RETRY_DEF
 def get_images(userid = None):
 	"""
 	Returns a list of all the images in the database. Each element 
@@ -350,35 +352,10 @@ def get_images(userid = None):
 			return imgs
 		else:
 			catch_resp_error( response )
-		"""
-		elif response.status_code == 500:
-			#
-			# failed:
-			#
-			body = response.json()
-			msg = body['message']
-			err_msg = f"status code {response.status_code}: {msg}"
-			#
-			# NOTE: this exception will not trigger retry mechanism,
-			# since we reached the server and the server-side failed,
-			# and we are assuming the server-side is also doing retries.
-			#
-			raise HTTPError(err_msg)
-		else:
-			#
-			# something unexpected happened, and in this case we don't
-			# have a JSON-based response, so let Python raise proper
-			# HTTPError for us:
-			#
-			response.raise_for_status()
-		"""
 
 	except Exception as err:
 		lg.error("get_images():")
 		lg.error(str(err))
-		#
-		# raise exception to trigger retry mechanism if appropriate:
-		#
 		raise
 
 	finally:
@@ -389,6 +366,7 @@ def get_images(userid = None):
 #
 # post_image
 #
+@RETRY_DEF
 def post_image(userid, local_filename):
 	"""
 	Uploads an image to S3 with a unique name, allowing the same local
@@ -454,9 +432,6 @@ def post_image(userid, local_filename):
 	except Exception as err:
 		lg.error("post_image():")
 		lg.error(str(err))
-		#
-		# raise exception to trigger retry mechanism if appropriate:
-		#
 		raise
 
 	finally:
@@ -467,6 +442,7 @@ def post_image(userid, local_filename):
 #
 # get_image
 #
+@RETRY_DEF
 def get_image(assetid, local_filename = None):
 	"""
 	Downloads the image from S3 denoted by the provided asset. If a
@@ -491,8 +467,42 @@ def get_image(assetid, local_filename = None):
 	exception upon error
 	"""
 
-	raise Exception("TODO")
 
+	try:
+		baseurl = WEB_SERVICE_URL
+		url = baseurl + "/image" + f"/{ assetid }"
+
+		response = requests.get( url )
+
+		if response.status_code == 200:
+			#
+			# success
+			#
+			json = response.json()
+			img_str = json[ "data" ]
+			img_bytes = base64.b64decode( img_str )
+
+			localname = \
+				local_filename[ local_filename.rfind('/')+1: ] \
+				if local_filename \
+				else json[ "local_filename" ]
+
+			with open( localname, "wb" ) as outfile:
+				outfile.write( img_bytes )
+
+			return localname
+
+		else:
+			catch_resp_error( response )
+
+	except Exception as err:
+		lg.error("get_image():")
+		lg.error(str(err))
+		raise
+
+	finally:
+		# nothing to do
+		pass
 
 ###################################################################
 #
