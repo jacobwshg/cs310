@@ -37,7 +37,7 @@ module.exports = { delete_images };
 async function
 delete_images( request, response )
 {
-	console.log( "**Call to delete /image..." );
+	console.log( "**Call to delete /images..." );
 
 	let dbConn = await get_dbConn();
 
@@ -139,7 +139,6 @@ delete_images( request, response )
 			() => get_keys(),
 			{ retries: 2 }
 		);
-
 
 		console.log( "delete_images keys:" );
 		console.log( keys );

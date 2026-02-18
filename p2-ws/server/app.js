@@ -127,3 +127,6 @@ app.delete( "/images", delete_images_file.delete_images );
 const get_image_labels_file = require( "./api_get_image_labels.js" );
 app.get( "/image_labels/:assetid", get_image_labels_file.get_image_labels );
 
+const GIWL_file = require( "./api_get_images_with_label.js" );
+app.get( "/images_with_label/:label", GIWL_file.get_images_with_label );
+

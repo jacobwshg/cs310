@@ -211,7 +211,7 @@ async function post_image( request, response )
 
 	try
 	{
-		const userid = parseInt( request.params.userid );
+		const userid = parseInt( request.params[ 'userid' ] );
 		if ( isNaN( userid ) )
 		{
 			throw new Error( `post_image: userid is not numeric` );

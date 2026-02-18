@@ -576,7 +576,34 @@ def get_images_with_label(label):
 	by label. If an error occurs, an exception is raised.
 	"""
 
-	raise Exception("TODO")
+	try:
+		baseurl = WEB_SERVICE_URL
+
+		url = baseurl + "/images_with_label" + f"/{ label }"
+
+		response = requests.get( url )
+
+		if response.status_code == 200:
+			#
+			# success
+			#
+			json = response.json()
+			rows = json[ "data" ]
+			return rows
+		else:
+			catch_resp_error( response )
+
+	except Exception as err:
+		lg.error("GIWL():")
+		lg.error(str(err))
+		#
+		# raise exception to trigger retry mechanism if appropriate:
+		#
+		raise
+
+	finally:
+		# nothing to do
+		pass
 
 
 ###################################################################
@@ -616,7 +643,6 @@ def delete_images():
 			#
 			json = response.json()
 			msg = json[ 'message' ]
-			print(f"message: { msg }")
 			return "success" in msg.lower();
 		else:
 			catch_resp_error( response )

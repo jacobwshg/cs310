@@ -225,7 +225,23 @@ def run_get_labels( assetid=1001 ):
 	finally:
 		print()
 
-print()
+#
+# g..._i_...w_...l...:
+#
+
+def run_GIWL( label='a' ):
+	try:
+		print(f"**GIWL: label { label } ")
+		res = None
+		res = photoapp.get_images_with_label( label )
+		print( res )
+	except Exception as err:
+		print("CLIENT ERROR:")
+		print(str(err))
+
+	finally:
+		print()
+
 
 if __name__ == "__main__":
 
@@ -255,6 +271,8 @@ if __name__ == "__main__":
 
 	run_get_labels( 1001 )
 	
+
+	run_GIWL( label='f' )
 
 	#"""
 

@@ -19,70 +19,55 @@ const { get_dbConn } = require('./helper.js');
 const pRetry = (...args) => import('p-retry').then(({default: pRetry}) => pRetry(...args));
 
 
-module.exports = { get_images };
+module.exports = { get_images_with_label };
 
 /**
- * get_images:
+ * get_images_with_label
  *
- * @description returns all the images in the database as a JSON object
- * {message: ..., data: ...} where message is either "success" or an
- * error message (with status code 500). If successful, the data is a list of
- * dictionary-like objects of the form {"assetid": int, "userid": int,
- * "localname": string, "bucketkey": string}, in order by assetid. If an error
- * occurs then the list is empty []. If a userid is given, then just the images
- * with that userid are returned; validity of the userid is not checked,
- * which implies that an empty list is returned if the userid is invalid.
+ * @description when an image is uploaded to S3, Rekognition
+ * is automatically called to label objects in the image.
+ * These labels are then stored in the database for retrieval / search.
+ * Given a label (partial such as 'boat' or complete 'sailboat'), this
+ * function performs a case-insensitive search for all images with
+ * this label. If successful the labels are returned as a JSON object
+ * of the form {message: ..., data: ...} where message is "success" and
+ * data is a list of dictionary-like objects of the form {"assetid": int,
+ * "label": string, "confidence": int}, ordered by assetid and then label.
+ * If an error occurs, status code of 500 is sent where JSON object's
+ *  message is the error message and the list is empty.
  *
- * @param userid (optional query parameter) filters the returned images for just
- this userid
+ * @param label (required URL parameter) to search for, can be a partial word (e.g.
+ boat)
  * @returns JSON {message: string, data: [object, object, ...]}
  */
+
 async function
-get_images( request, response )
+get_images_with_label( request, response )
 {
-	let dbConn;
+	let dbConn = await get_dbConn();
 
 	async function
-	fetch_images( userid )
+	fetch_images( label )
 	{
-		let sql = `
-			Select assetid, userid, localname, bucketkey
-			From assets
+		const lookup_sql = `
+			Select assetid, label, confidence
+			From labels
+			Where label Like ?
+			Order By assetid Asc, label Asc;
 		`;
-		if ( userid >= 0 )
-		{
-			console.log( `get_images() positive userid ${ userid }` );
-			sql += `
-				Where userid = ?
-			`;
-		}
-		sql += `
-			Order By assetid Asc;
-		`;
-
+		const pattern = `%${ label }%`;
 		try
 		{
-			//
-			// open connection to database:
-			//
-			dbConn = await get_dbConn();
 			//
 			// call MySQL to execute query, await for results:
 			//
 			console.log( "executing SQL..." );
 
 			let [ rows, _colinfo ] = await dbConn.execute(
-				sql,
-				userid ? [ userid, ] : []
+				lookup_sql, [ pattern, ]
 			);
 
-			//
-			// success, return rows from DB:
-			//
 			console.log( `done, retrieved ${rows.length} rows` );
-
-			//console.log( "get_images() rows:" );
-			//console.log( rows );
 
 			return rows;
 		}
@@ -91,7 +76,7 @@ get_images( request, response )
 			//
 			// exception:
 			//
-			console.log( "ERROR in get_images.fetch_images():" );
+			console.log( "ERROR in GIWL.fetch_images():" );
 			console.log( err.message );
 
 			throw err;	// re-raise exception to trigger retry mechanism
@@ -118,20 +103,12 @@ get_images( request, response )
 	//
 	try
 	{
-		console.log( "**Call to get /images..." );
+		console.log( "**Call to get /images_with_label..." );
 
-		let userid = -1;
-		if ( request.query[ 'userid' ] )
-		{
-			userid = parseInt( request.query[ 'userid' ] );
-		}
-		if ( isNaN( userid ) ) 
-		{
-			throw new Error( "get_images(): userid is not numeric" );
-		}
+		const label = request.params[ 'label' ];
 
 		const rows = await pRetry(
-			() => fetch_images( userid ),
+			() => fetch_images( label ),
 			{ retries: 2 }
 		);
 
@@ -140,9 +117,12 @@ get_images( request, response )
 		//
 		console.log( "success, sending response..." );
 
+		console.log( rows );
+
+		const scs_str = "success";
 		response.json(
 			{
-				message: "success",
+				message: scs_str,
 				data: rows,
 			}
 		);

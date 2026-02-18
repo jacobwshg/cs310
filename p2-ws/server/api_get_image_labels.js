@@ -120,7 +120,7 @@ async function get_image_labels( request, response )
 	{
 		console.log( "**Call to get /image_labels..." );
 
-		const assetid = parseInt( request.params[ "assetid" ] );
+		const assetid = parseInt( request.params[ 'assetid' ] );
 
 		await pRetry(
 			() => validate_assetid( assetid ),
@@ -140,8 +140,8 @@ async function get_image_labels( request, response )
 		const scs_str = "success";
 		response.json(
 			{
-				"message": scs_str,
-				"data": records,
+				message: scs_str,
+				data:    records,
 			}
 		);
 	}
@@ -159,8 +159,8 @@ async function get_image_labels( request, response )
 		//
 		response.status(500).json(
 			{
-				"message": err.message,
-				"data": [],
+				message: err.message,
+				data:    [],
 			}
 		);
 	}

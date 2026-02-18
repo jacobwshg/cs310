@@ -82,7 +82,7 @@ get_image( request, response )
 	}
 
 	async function
-	get_image_str( bkt_key )
+	download_image_str( bkt_key )
 	{
 		try
 		{
@@ -105,7 +105,7 @@ get_image( request, response )
 			//
 			// exception:
 			//
-			console.log( "ERROR in get_image.download_file():" );
+			console.log( "ERROR in get_image.download_image_str():" );
 			console.log( err.message );
 			throw err;
 		}
@@ -113,7 +113,7 @@ get_image( request, response )
 
 	try
 	{
-		const assetid = parseInt( request.params.assetid );
+		const assetid = parseInt( request.params[ 'assetid' ] );
 		if ( isNaN( assetid ) )
 		{
 			throw new Error( `get_image: assetid is not numeric` );
@@ -132,7 +132,7 @@ get_image( request, response )
 			[ row[ 'userid' ], row[ 'localname' ], row[ 'bucketkey' ] ];
 
 		/* Retrive image from bucket and encode as string */
-		const img_str = await get_image_str( bkt_key );
+		const img_str = await download_image_str( bkt_key );
 
 		let local_filename = db_localname;
 
@@ -157,8 +157,8 @@ get_image( request, response )
 
 		response.status(500).json(
 			{
-				message:        err.message,
-				userid:         -1,
+				message: err.message,
+				userid:  -1,
 			}
 		);
 	}
