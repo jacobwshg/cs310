@@ -1,8 +1,7 @@
 //
 // API function: get /images
 //
-// Returns all images posted by a specific user, 
-// or all the images in the database.
+// Returns all labels associated with a specific image (identified by asset ID).
 //
 // Authors:
 //	 Jacob Wang

@@ -2,7 +2,7 @@
 //
 // API function: post /image
 //
-// Downloads an images identified by its assetid. 
+// Downloads an image identified by its assetid. 
 //
 // Authors:
 //	 Jacob Wang
