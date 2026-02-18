@@ -444,7 +444,6 @@ def get_image(assetid, local_filename = None):
 	exception upon error
 	"""
 
-
 	try:
 		baseurl = WEB_SERVICE_URL
 		url = baseurl + "/image" + f"/{ assetid }"
@@ -511,8 +510,39 @@ def get_image_labels(assetid):
 	a ValueError, "no such assetid". 
 	"""
 
-	raise Exception("TODO")
-		
+	try:
+		baseurl = WEB_SERVICE_URL
+
+		url = baseurl + "/image_labels" + f"/{ assetid }"
+
+		response = requests.get( url )
+
+		if response.status_code == 200:
+			#
+			# success
+			#
+			json = response.json()
+			records = json['data']
+
+			#
+			# rows is a dictionary-like list of objects, so
+			# let's extract the values and discard the keys
+			# to honor the API's return value:
+			#
+			return [ ( rcd[ "label" ], rcd[ "confidence" ] ) for rcd in records ]
+
+		else:
+			catch_resp_error( response )
+
+	except Exception as err:
+		lg.error("get_image_labels():")
+		lg.error(str(err))
+		raise
+
+	finally:
+		# nothing to do
+		pass
+
 
 ###################################################################
 #

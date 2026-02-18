@@ -101,26 +101,29 @@ app.get('/', (request, response) => {
 //
 // 1. app.get('/ping', async (request, response) => {...});
 //
-let get_ping_file = require('./api_get_ping.js');
-app.get('/ping', get_ping_file.get_ping);
+const get_ping_file = require( "./api_get_ping.js" );
+app.get( "/ping", get_ping_file.get_ping );
 //
 // 2. app.get('/users', async (request, response) => {...});
 //
-let get_users_file = require('./api_get_users.js');
-app.get('/users', get_users_file.get_users);
+const get_users_file = require( "./api_get_users.js" );
+app.get( "/users", get_users_file.get_users );
 
 //
 // load and define more API functions 
 //
-let get_images_file = require( "./api_get_images.js" );
+const get_images_file = require( "./api_get_images.js" );
 app.get( "/images", get_images_file.get_images );
 
-let post_image_file = require( "./api_post_image.js" );
+const post_image_file = require( "./api_post_image.js" );
 app.post( "/image/:userid", post_image_file.post_image );
 
-let get_image_file = require( "./api_get_image.js" );
+const get_image_file = require( "./api_get_image.js" );
 app.get( "/image/:assetid", get_image_file.get_image );
 
-let delete_images_file = require( "./api_delete_images.js" );
+const delete_images_file = require( "./api_delete_images.js" );
 app.delete( "/images", delete_images_file.delete_images );
+
+const get_image_labels_file = require( "./api_get_image_labels.js" );
+app.get( "/image_labels/:assetid", get_image_labels_file.get_image_labels );
 

@@ -133,6 +133,7 @@ async function post_image( request, response )
 				update_sql,
 				[ userid, local_filename, bkt_key ]
 			);
+			await dbConn.commit();
 			console.log( "post_images.update_db result:\n" );
 			console.log( info );
 			const assetid = info.insertId;
@@ -194,6 +195,7 @@ async function post_image( request, response )
 					[ assetid, label.Name, Math.round( label.Confidence ) ]
 				);
 			}
+			await dbConn.commit();
 		}
 		catch ( err )
 		{
@@ -238,6 +240,9 @@ async function post_image( request, response )
 		const [ assetid, rkg_labels ] = await Promise.all(
 			[ prom_assetid, prom_rkg_labels ]
 		);
+
+		//console.log( "post_image rkg labels" );
+		//console.log( rkg_labels );
 
 		/* Register labels in db */
 		await pRetry(

@@ -91,6 +91,7 @@ delete_images( request, response )
 			{
 				await dbConn.execute( clause );
 			}
+			await dbConn.commit();
 		}
 		catch ( err )
 		{
@@ -153,7 +154,10 @@ delete_images( request, response )
 		//while ( `a` ) {}
 
 		await clear_db();
-		await clear_bkt( keydict );
+		if ( keydict.length > 0 )
+		{
+			await clear_bkt( keydict );
+		}
 
 		const scs_str = "success"; 
 		console.log( scs_str );
