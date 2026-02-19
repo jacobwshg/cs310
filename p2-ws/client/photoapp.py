@@ -373,7 +373,7 @@ def post_image(userid, local_filename):
 		data = \
 		{ \
 			"local_filename": pure_localname, \
-			"img_str": img_str, \
+			"data": img_str, \
 		}
 
 		response = requests.post( url, json=data )

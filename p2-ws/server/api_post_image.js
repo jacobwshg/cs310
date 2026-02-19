@@ -218,7 +218,8 @@ async function post_image( request, response )
 			throw new ValueError( "post_image: userid is not numeric" );
 		}
 		console.log( `post_image userid: ${ userid }` );
-		const { local_filename, img_str } = request.body;
+		const [ local_filename, img_str ] =
+			[ request.body[ 'local_filename' ], request.body[ 'data' ] ];
 		const img_bytes = Buffer.from( img_str, 'base64' );
 
 		/* Lookup user */

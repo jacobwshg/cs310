@@ -55,8 +55,8 @@ get_image( request, response )
 		try
 		{
 			const result = await dbConn.execute( lookup_sql, [ assetid, ] );
-			console.log( `get_image validate_assetid result:` );
-			console.log( result )
+			//console.log( `get_image validate_assetid result:` );
+			//console.log( result );
 			const [ rows, _colinfo ] = result;
 
 			if ( rows.length < 1 )
@@ -114,11 +114,14 @@ get_image( request, response )
 
 	try
 	{
+		/*
 		const assetid = parseInt( request.params[ 'assetid' ] );
 		if ( isNaN( assetid ) )
 		{
 			throw new ValueError( "assetid is not numeric" );
 		}
+		*/
+		const assetid = request.params[ 'assetid' ];
 		console.log( `get_image assetid: ${ assetid }` );
 
 		/* Validate assetid */
@@ -161,6 +164,8 @@ get_image( request, response )
 			{
 				message: err.message,
 				userid:  -1,
+				local_filename: undefined,
+				data:           undefined,
 			}
 		);
 	}

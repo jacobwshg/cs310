@@ -177,9 +177,8 @@ def run_get_img_localname( assetid = 1001, localname="out_img.jpg" ):
 	finally:
 		print()
 
-def run_get_img_bad_aid():
+def run_get_img_bad_aid( assetid = 607 ):
 	try:
-		assetid = 607
 		print(f"**get_image: { assetid } ")
 		local_filename = photoapp.get_image( assetid )
 
@@ -255,7 +254,7 @@ if __name__ == "__main__":
 	init()
 	run_ping()
 
-	"""
+	#"""
 
 	run_get_users()
 
@@ -267,13 +266,13 @@ if __name__ == "__main__":
 
 	run_get_img()
 	run_get_img_localname(  )
-	run_get_img_bad_aid(  )
+	run_get_img_bad_aid( assetid="1001; Select * From Assets" )
 
 	run_get_labels( 1001 )
 	
 	run_GIWL( label='a' )
 
-	"""
+	#"""
 
 	#run_del_imgs()
 	
