@@ -159,9 +159,9 @@ async function post_image( request, response )
 		{
 			const cmd_params = 
 				{
-					Image: { Bytes: img_bytes },
-					MaxLabels: 10,
-					MinConfidence: 90,
+					Image:         { Bytes: img_bytes },
+					MaxLabels:     100,
+					MinConfidence: 80.0,
 				}
 			const cmd = new DetectLabelsCommand( cmd_params );
 			let rkg = get_rekognition();

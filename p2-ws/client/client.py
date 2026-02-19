@@ -254,9 +254,9 @@ if __name__ == "__main__":
 	init()
 	run_ping()
 
-	"""
-
 	run_get_users()
+
+	"""
 
 	run_post_img()
 
@@ -274,7 +274,7 @@ if __name__ == "__main__":
 
 	"""
 
-	run_del_imgs()
+	#run_del_imgs()
 	
 	print()
 	print("**done**")
