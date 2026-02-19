@@ -191,9 +191,11 @@ async function post_image( request, response )
 		{
 			for ( let label of rkg_labels.Labels )
 			{
+				const conf_int = Math.floor( label.Confidence );
+				console.log( `label ${ label.Name } confidence cast from ${ label.Confidence } to ${ conf_int }` );
 				await dbConn.execute(
 					update_label_sql,
-					[ assetid, label.Name, Math.round( label.Confidence ) ]
+					[ assetid, label.Name, Math.floor( label.Confidence ) ]
 				);
 			}
 			await dbConn.commit();
