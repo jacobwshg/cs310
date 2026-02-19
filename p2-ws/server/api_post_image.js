@@ -161,7 +161,7 @@ async function post_image( request, response )
 				{
 					Image: { Bytes: img_bytes },
 					MaxLabels: 10,
-					MinConfidence: 80
+					MinConfidence: 9 Math.floor( '5' )0
 				}
 			const cmd = new DetectLabelsCommand( cmd_params );
 			let rkg = get_rekognition();
@@ -288,4 +288,6 @@ async function post_image( request, response )
 	}
 	
 }
+
+//fvck rekognition
 

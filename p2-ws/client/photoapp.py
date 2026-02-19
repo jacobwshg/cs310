@@ -70,6 +70,12 @@ def catch_resp_error( response ):
 # NOTE: does not check to make sure we can actually reach the
 # web service. Call get_ping() to check.
 #
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def initialize(client_config_file):
 	"""
 	Initializes local environment for AWS access, returning True
@@ -124,7 +130,12 @@ def initialize(client_config_file):
 # is raised. Exceptions of type HTTPError are from the underlying
 # web service.
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def get_ping():
 	"""
 	Based on the configuration file, retrieves the # of items in the S3 bucket and
@@ -179,7 +190,12 @@ def get_ping():
 #
 # get_users
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def get_users():
 	"""
 	Returns a list of all the users in the database. Each element 
@@ -251,7 +267,12 @@ def get_users():
 #
 # get_images
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def get_images(userid = None):
 	"""
 	Returns a list of all the images in the database. Each element 
@@ -325,7 +346,12 @@ def get_images(userid = None):
 #
 # post_image
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def post_image(userid, local_filename):
 	"""
 	Uploads an image to S3 with a unique name, allowing the same local
@@ -401,7 +427,12 @@ def post_image(userid, local_filename):
 #
 # get_image
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def get_image(assetid, local_filename = None):
 	"""
 	Downloads the image from S3 denoted by the provided asset. If a
@@ -466,7 +497,12 @@ def get_image(assetid, local_filename = None):
 #
 # get_image_labels
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def get_image_labels(assetid):
 	"""
 	When an image is uploaded to S3, Rekognition is
@@ -531,7 +567,12 @@ def get_image_labels(assetid):
 #
 # get_images_with_label
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def get_images_with_label(label):
 	"""
 	When an image is uploaded to S3, Rekognition is
@@ -597,7 +638,12 @@ def get_images_with_label(label):
 #
 # delete_images
 #
-@RETRY_DEF
+@retry(
+	stop=stop_after_attempt(3), 
+	wait=wait_exponential(multiplier=1, min=2, max=30),
+	retry=retry_if_exception_type((ConnectionError, Timeout)),
+	reraise=True
+)
 def delete_images():
 	"""
 	Delete all images and associated labels from the database and 
