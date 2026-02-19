@@ -135,8 +135,8 @@ async function post_image( request, response )
 				[ userid, local_filename, bkt_key ]
 			);
 			await dbConn.commit();
-			console.log( "post_images.update_db result:\n" );
-			console.log( info );
+			//console.log( "post_images.update_db result:\n" );
+			//console.log( info );
 			const assetid = info.insertId;
 			return assetid;
 		}
@@ -192,10 +192,10 @@ async function post_image( request, response )
 			for ( let label of rkg_labels.Labels )
 			{
 				const conf_int = Math.floor( label.Confidence );
-				console.log( `label ${ label.Name } confidence cast from ${ label.Confidence } to ${ conf_int }` );
+				//console.log( `label ${ label.Name } confidence cast from ${ label.Confidence } to ${ conf_int }` );
 				await dbConn.execute(
 					update_label_sql,
-					[ assetid, label.Name, Math.floor( label.Confidence ) ]
+					[ assetid, label.Name, conf_int ]
 				);
 			}
 			await dbConn.commit();
@@ -214,11 +214,7 @@ async function post_image( request, response )
 
 	try
 	{
-		const userid = parseInt( request.params[ 'userid' ] );
-		if ( isNaN( userid ) )
-		{
-			throw new ValueError( "post_image: userid is not numeric" );
-		}
+		const userid = request.params[ 'userid' ];
 		console.log( `post_image userid: ${ userid }` );
 		const [ local_filename, img_str ] =
 			[ request.body[ 'local_filename' ], request.body[ 'data' ] ];

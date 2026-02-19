@@ -114,13 +114,6 @@ get_image( request, response )
 
 	try
 	{
-		/*
-		const assetid = parseInt( request.params[ 'assetid' ] );
-		if ( isNaN( assetid ) )
-		{
-			throw new ValueError( "assetid is not numeric" );
-		}
-		*/
 		const assetid = request.params[ 'assetid' ];
 		console.log( `get_image assetid: ${ assetid }` );
 

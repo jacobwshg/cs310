@@ -254,7 +254,7 @@ if __name__ == "__main__":
 	init()
 	run_ping()
 
-	#"""
+	"""
 
 	run_get_users()
 
@@ -272,9 +272,9 @@ if __name__ == "__main__":
 	
 	run_GIWL( label='a' )
 
-	#"""
+	"""
 
-	#run_del_imgs()
+	run_del_imgs()
 	
 	print()
 	print("**done**")
